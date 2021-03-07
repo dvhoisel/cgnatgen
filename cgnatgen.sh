@@ -4,23 +4,32 @@
 versao="0.1"
 autor="Daniel Hoisel"
 if which dialog >/dev/null; then
+if [[ $1 ]]; then arquivo=$1 ; else arquivo="$arquivo" ; fi
 while : ; do
     if which ipcalc >/dev/null; then
         aviso=""
     else
-        aviso=" Obs.: Para haver validação, o programa
-                ipcalc tem que estar instalado.
+        aviso=" o programa ipcalc tem que estar instalado,
+                para que as validações sejam feitas.
                 Confira a entrada de dados."
     fi
 	entrada=$( dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
     --inputbox "$aviso
+
+                Defina o nome do arquivo, executando o programa
+                com o nome como parâmetro. Ex.:
+
+                ./cgnatgen.sh arquivo.rsc
+
+                Se não for defindo, será gerado como mk-cgnat.rsc
+                Atualmente o nome é: $arquivo
 
                 Informe o bloco(pool) privado, com a máscara.
                 Ex: 100.100.0.0/20" 0 0 )
 	if which ipcalc >/dev/null; then
         ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --msgbox "Endereço IP ou de rede inválidos" 0 0; exit; }
     else
-        dialog --stdout --sleep 3 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
+        dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
     ipprivado=`echo $entrada | cut -f 1 -d /`
     mascaraprivado=`echo $entrada | cut -f 2 -d /`
@@ -45,7 +54,7 @@ while : ; do
 	if which ipcalc >/dev/null; then
         ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "Endereço IP ou de rede inválidos" 0 0 ; exit; }
     else
-        dialog --stdout --sleep 3 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
+        dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
     ippublico=`echo $entrada | cut -f 1 -d /`
     mascarapublico=`echo $entrada | cut -f 2 -d /`
@@ -64,7 +73,7 @@ while : ; do
                 --backtitle 'cgnatgen'   \
                 --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
                 --infobox "
-                Gerando o arquivo mk-cgnat.rsc
+                Gerando o arquivo $arquivo
 
                 Quantidade de IPs públicos: $quantidadepublico
                 Quantidade de IPs privados: $quantidadeprivado
@@ -74,7 +83,7 @@ while : ; do
                 $aviso2
                 " 12 60
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
-    echo "/ip firewall nat"> mk-cgnat.rsc
+    echo "/ip firewall nat"> $arquivo
     ippubpo=`echo $ippublico | cut -d . -f 1`
     ippubso=`echo $ippublico | cut -d . -f 2`
     ippubto=`echo $ippublico | cut -d . -f 3`
@@ -97,7 +106,7 @@ while : ; do
             ipprvqo=0
             ipprvto=$(( $ipprvto + 1))
         fi
-        echo "add chain=srcnat action=jump comment=\"CGNAT por cgnatgen - JUMP para $ippubpo.$ippubso.$ippubto.$ippubqo\" jump-target=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" src-address=\"$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump\"" >> mk-cgnat.rsc
+        echo "add chain=srcnat action=jump comment=\"CGNAT por cgnatgen - JUMP para $ippubpo.$ippubso.$ippubto.$ippubqo\" jump-target=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" src-address=\"$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump\"" >> $arquivo
         ippubqo=$(( $ippubqo + 1 ))
         ipprvqo=$(( $ipprvqo + $relacao ))
         y=$(( $y + 1 ))
@@ -124,7 +133,7 @@ while : ; do
             ipprvqo=0
             ipprvto=$(( $ipprvto + 1))
         fi
-        echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=icmp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump to-address=$ippubpo.$ippubso.$ippubto.$ippubqo comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> mk-cgnat.rsc
+        echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=icmp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump to-address=$ippubpo.$ippubso.$ippubto.$ippubqo comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
         x=1
         while [ $x -le $relacao ]
         do
@@ -138,8 +147,8 @@ while : ; do
                 ipprvqo=0
                 ipprvto=$(( $ipprvto + 1))
             fi
-            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=tcp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 )) comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> mk-cgnat.rsc
-            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=udp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 )) comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> mk-cgnat.rsc
+            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=tcp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 )) comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
+            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=udp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 )) comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
             portainicial=$(( $portainicial + $portas ))
             ipprvqo=$(( $ipprvqo + 1 ))
             x=$(( $x + 1 ))
