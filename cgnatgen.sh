@@ -129,7 +129,7 @@ while : ; do
                 --cr-wrap \
                 --sleep 5 \
                 --backtitle 'cgnatgen'   \
-                --title #cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
+                --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
                 --infobox "
                 Gerando o arquivo mk-cgnat.rsc
 
