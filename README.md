@@ -5,4 +5,5 @@ Depois de procurar vários scripts na web, e não encontrar nenhum que fizesse e
 fiz esse em bash, que me atende. Espero que possa servir para outros.
 
 Depende do dialog
+
 Usa o ipcalc para fazer algumas validações de IP.
