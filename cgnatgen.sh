@@ -2,8 +2,10 @@
 # Desenvolvido por Daniel Hoisel
 # Licenciado sob a GPL 3.0
 versao="0.1"
+autor="Daniel Hoisel"
+if which dialog >/dev/null; then
 while : ; do
-	entrada=$( dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
+	entrada=$( dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
     --inputbox "
                 Obs.: Para haver validação, o programa
                 ipcalc tem que estar instalado.
@@ -11,9 +13,9 @@ while : ; do
                 
                 Informe o bloco(pool) privado, com a máscara. Ex: 100.100.0.0/20" 0 0 )
 	if which ipcalc >/dev/null; then
-        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { echo "Endereço de IP ou de rede inválidos!"; exit; }
+        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --msgbox "Endereço IP ou de rede inválidos" 0 0; exit; }
     else
-        echo ipcalc não instalado
+        dialog --stdout --sleep 3 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
     ipprivado=`echo $entrada | cut -f 1 -d /`
     mascaraprivado=`echo $entrada | cut -f 2 -d /`
@@ -23,7 +25,7 @@ while : ; do
         exit
     fi
     entrada=$( dialog --stdout --backtitle 'cgnatgen' \
-                --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
+                --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
                 --inputbox "
                 PORTAS X PREFIXO PÚBLICO NECESSÁRIO
                 -----------------------------------
@@ -35,9 +37,9 @@ while : ; do
                 
                 Informe o bloco(pool) público, com a máscara. Ex: 200.200.0.0/25" 0 0 )
 	if which ipcalc >/dev/null; then
-        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { echo "Endereço de IP ou de rede inválidos!"; exit; }
+        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "Endereço IP ou de rede inválidos" 0 0 ; exit; }
     else
-        echo ipcalc não instalado
+        dialog --stdout --sleep 3 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
     ippublico=`echo $entrada | cut -f 1 -d /`
     mascarapublico=`echo $entrada | cut -f 2 -d /`
@@ -52,8 +54,9 @@ while : ; do
     fi
     dialog \
                 --cr-wrap \
+                --sleep 5 \
                 --backtitle 'cgnatgen'   \
-                --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
+                --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
                 --infobox "
                 Gerando o arquivo mk-cgnat.rsc
 
@@ -141,3 +144,7 @@ while : ; do
     done
     exit
 done
+else
+    echo cgnatgen - Desenvolvido por $autor - Versão: $versao
+    echo dialog não instalado
+fi
