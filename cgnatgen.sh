@@ -52,7 +52,6 @@ while : ; do
     fi
     dialog \
                 --cr-wrap \
-                --sleep 5 \
                 --backtitle 'cgnatgen'   \
                 --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
                 --infobox "
