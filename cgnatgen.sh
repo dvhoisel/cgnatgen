@@ -3,8 +3,14 @@
 # Licenciado sob a GPL 3.0
 versao="0.1"
 autor="Daniel Hoisel"
-if which dialog >/dev/null; then
-if [[ $1 ]]; then arquivo=$1 ; else arquivo="$arquivo" ; fi
+if which dialog >/dev/null
+then
+if [[ $1 ]]
+then
+    arquivo=$1
+else
+    arquivo="$arquivo"
+fi
 while : ; do
     if which ipcalc >/dev/null; then
         aviso=""
