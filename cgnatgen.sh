@@ -45,6 +45,26 @@ while : ; do
     quantidadeprivado=$((2**$((32-$mascaraprivado))))
     relacao=$(($quantidadeprivado/$quantidadepublico))
     portas=$((64000/$relacao))
+    if [[ $portas -lt 500 || $portas -gt 8000 ]]
+    then
+        aviso1="AVISO: A quantidade mínima e máxima de portas"
+        aviso2="recomendada é 500 e 8000, respectivamente"
+    fi
+    dialog \
+                --cr-wrap \
+                --sleep 5 \
+                --backtitle 'cgnatgen'   \
+                --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
+                --infobox "
+                Gerando o arquivo mk-cgnat.rsc
+
+                Quantidade de IPs públicos: $quantidadepublico
+                Quantidade de IPs privados: $quantidadeprivado
+                Relação entre público e privado: 1:$relacao
+                Quantidade de portas para cada IP privado: $portas
+                $aviso1
+                $aviso2
+                " 12 60
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
     echo "/ip firewall nat"> mk-cgnat.rsc
     ippubpo=`echo $ippublico | cut -d . -f 1`
@@ -120,25 +140,5 @@ while : ; do
         ippubqo=$(( $ippubqo + 1 ))
         y=$(( $y + 1 ))
     done
-    if [[ $portas -lt 500 || $portas -gt 8000 ]]
-    then
-        aviso1="AVISO: A quantidade mínima e máxima de portas"
-        aviso2="recomendada é 500 e 8000, respectivamente"
-    fi
-    dialog \
-                --cr-wrap \
-                --sleep 5 \
-                --backtitle 'cgnatgen'   \
-                --title "cgnatgen - Desenvolvido por Daniel Hoisel - Versão: $versao" \
-                --infobox "
-                Gerando o arquivo mk-cgnat.rsc
-
-                Quantidade de IPs públicos: $quantidadepublico
-                Quantidade de IPs privados: $quantidadeprivado
-                Relação entre público e privado: 1:$relacao
-                Quantidade de portas para cada IP privado: $portas
-                $aviso1
-                $aviso2
-                " 12 60
     exit
 done
