@@ -5,13 +5,18 @@ versao="0.1"
 autor="Daniel Hoisel"
 if which dialog >/dev/null; then
 while : ; do
-	entrada=$( dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
-    --inputbox "
-                Obs.: Para haver validação, o programa
+    if which ipcalc >/dev/null; then
+        aviso=""
+    else
+        aviso=" Obs.: Para haver validação, o programa
                 ipcalc tem que estar instalado.
-                Confira a entrada de dados.
-                
-                Informe o bloco(pool) privado, com a máscara. Ex: 100.100.0.0/20" 0 0 )
+                Confira a entrada de dados."
+    fi
+	entrada=$( dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
+    --inputbox "$aviso
+
+                Informe o bloco(pool) privado, com a máscara.
+                Ex: 100.100.0.0/20" 0 0 )
 	if which ipcalc >/dev/null; then
         ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --msgbox "Endereço IP ou de rede inválidos" 0 0; exit; }
     else
@@ -35,7 +40,8 @@ while : ; do
                 1000: /$(( $mascaraprivado + 6 ))
                 0500: /$(( $mascaraprivado + 7 ))
                 
-                Informe o bloco(pool) público, com a máscara. Ex: 200.200.0.0/25" 0 0 )
+                Informe o bloco(pool) público, com a máscara.
+                Ex: 200.200.0.0/25" 0 0 )
 	if which ipcalc >/dev/null; then
         ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "Endereço IP ou de rede inválidos" 0 0 ; exit; }
     else
