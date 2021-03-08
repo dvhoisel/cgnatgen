@@ -9,7 +9,7 @@ if [[ $1 ]]
 then
     arquivo=$1
 else
-    arquivo="mk-cgnat.rsc"
+    arquivo="cgnatgen.rsc"
 fi
 while : ; do
     if which ipcalc >/dev/null; then
