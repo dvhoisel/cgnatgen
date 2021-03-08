@@ -9,7 +9,7 @@ if [[ $1 ]]
 then
     arquivo=$1
 else
-    arquivo="$arquivo"
+    arquivo="mk-cgnat.rsc"
 fi
 while : ; do
     if which ipcalc >/dev/null; then
@@ -75,7 +75,6 @@ while : ; do
     fi
     dialog \
                 --cr-wrap \
-                --sleep 5 \
                 --backtitle 'cgnatgen'   \
                 --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
                 --infobox "
@@ -89,7 +88,7 @@ while : ; do
                 $aviso2
                 " 12 60
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
-    echo "/ip firewall nat"> $arquivo
+    echo "/ip firewall nat" > $arquivo
     ippubpo=`echo $ippublico | cut -d . -f 1`
     ippubso=`echo $ippublico | cut -d . -f 2`
     ippubto=`echo $ippublico | cut -d . -f 3`
