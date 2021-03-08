@@ -84,6 +84,7 @@ while : ; do
                 Quantidade de IPs privados: $quantidadeprivado
                 Relação entre público e privado: 1:$relacao
                 Quantidade de portas para cada IP privado: $portas
+		Quantidade de regras criadas: $(( ($quantidadepublico * 2) + ($quantidadeprivado*2) ))
                 $aviso1
                 $aviso2
                 " 12 60
