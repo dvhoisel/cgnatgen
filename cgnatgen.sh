@@ -33,7 +33,7 @@ while : ; do
                 Informe o bloco(pool) privado, com a máscara.
                 Ex: 100.100.0.0/20" 0 0 )
 	if which ipcalc >/dev/null; then
-        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --msgbox "Endereço IP ou de rede inválidos" 0 0; exit; }
+        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --msgbox "Endereço de rede inválido" 0 0; exit; }
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
@@ -58,7 +58,7 @@ while : ; do
                 Informe o bloco(pool) público, com a máscara.
                 Ex: 200.200.0.0/25" 0 0 )
 	if which ipcalc >/dev/null; then
-        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "Endereço IP ou de rede inválidos" 0 0 ; exit; }
+        ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "Endereço de rede inválido" 0 0 ; exit; }
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
