@@ -31,7 +31,7 @@ while : ; do
                 Atualmente o nome é: $arquivo
 
                 Informe o bloco(pool) privado, com a máscara.
-                Ex: 100.100.0.0/20" 0 0 )
+                Ex.: 100.100.0.0/20" 0 0 )
 	if which ipcalc >/dev/null; then
         ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --msgbox "Endereço IP ou de rede inválidos" 0 0; exit; }
     else
@@ -56,7 +56,7 @@ while : ; do
                 0500: /$(( $mascaraprivado + 7 ))
                 
                 Informe o bloco(pool) público, com a máscara.
-                Ex: 200.200.0.0/25" 0 0 )
+                Ex.: 200.200.0.0/25" 0 0 )
 	if which ipcalc >/dev/null; then
         ipcalc -cbn $entrada | grep Network | cut -f2 -d: | grep $entrada || { dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "Endereço IP ou de rede inválidos" 0 0 ; exit; }
     else
@@ -93,6 +93,7 @@ while : ; do
                 " 15 60
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
     echo "/ip firewall nat" > $arquivo
+    echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen - Desative essa regra para desativar o CGNAT\"" >> $arquivo
     ippubpo=`echo $ippublico | cut -d . -f 1`
     ippubso=`echo $ippublico | cut -d . -f 2`
     ippubto=`echo $ippublico | cut -d . -f 3`
@@ -115,7 +116,7 @@ while : ; do
             ipprvqo=0
             ipprvto=$(( $ipprvto + 1))
         fi
-        echo "add chain=srcnat action=jump comment=\"CGNAT por cgnatgen - JUMP para $ippubpo.$ippubso.$ippubto.$ippubqo\" jump-target=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" src-address=\"$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump\"" >> $arquivo
+        echo "add chain=CGNAT action=jump jump-target=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" src-address=\"$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump\" comment=\"CGNAT por cgnatgen - JUMP para $ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
         ippubqo=$(( $ippubqo + 1 ))
         ipprvqo=$(( $ipprvqo + $relacao ))
         y=$(( $y + 1 ))
@@ -142,7 +143,7 @@ while : ; do
             ipprvqo=0
             ipprvto=$(( $ipprvto + 1))
         fi
-        echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=icmp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump to-address=$ippubpo.$ippubso.$ippubto.$ippubqo comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
+        echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=icmp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump to-address=$ippubpo.$ippubso.$ippubto.$ippubqo" >> $arquivo
         x=1
         while [ $x -le $relacao ]
         do
@@ -156,8 +157,8 @@ while : ; do
                 ipprvqo=0
                 ipprvto=$(( $ipprvto + 1))
             fi
-            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=tcp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 )) comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
-            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=udp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 )) comment=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
+            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=tcp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 ))" >> $arquivo
+            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=udp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 ))" >> $arquivo
             portainicial=$(( $portainicial + $portas ))
             ipprvqo=$(( $ipprvqo + 1 ))
             x=$(( $x + 1 ))
