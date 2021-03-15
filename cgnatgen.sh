@@ -102,7 +102,7 @@ while : ; do
     ipprvso=`echo $ipprivado | cut -d . -f 2`
     ipprvto=`echo $ipprivado | cut -d . -f 3`
     ipprvqo=`echo $ipprivado | cut -d . -f 4`
-    comecoporta=1500
+    comecoporta=1501
     y=1
     while [ $y -le $quantidadepublico ]
     do
