@@ -8,6 +8,15 @@ Depende do dialog
 
 Usa o ipcalc para fazer algumas validações de IP.
 
+### Screenshots
+
+![Screenshot da entrada do prefixo privado](/cgnatgen.png "Prefixo privado")
+
+![Screenshot da entrada do prefixo público](/cgnatgen2.png "Prefixo público")
+
+![Screenshot da saída com informações](/cgnatgen3.png "Informações de saída")
+
+
 TODO: 
 - Substituir cut por separação de variável em matriz
 - Aceitar mais de um prefixo público para um prefixo privado
