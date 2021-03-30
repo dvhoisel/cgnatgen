@@ -21,15 +21,11 @@ while : ; do
     fi
 	entrada=$( dialog --stdout --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
     --inputbox "$aviso
-
                 Defina o nome do arquivo, executando o programa
                 com o nome como parâmetro. Ex.:
-
                 ./cgnatgen.sh arquivo.rsc
-
                 Se não for defindo, será gerado como mk-cgnat.rsc
                 Atualmente o nome é: $arquivo
-
                 Informe o bloco(pool) privado, com a máscara.
                 Ex.: 100.100.0.0/20" 0 0 )
 	if which ipcalc >/dev/null; then
@@ -79,21 +75,18 @@ while : ; do
                 --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" \
                 --infobox "
                 Gerando o arquivo $arquivo
-
                 Quantidade de IPs públicos: $quantidadepublico
                 Quantidade de IPs privados: $quantidadeprivado
                 Relação entre público e privado: 1:$relacao
                 Quantidade de portas para cada IP privado: $portas
                 Quantidade de regras criadas: $(( ($quantidadepublico * 2) + ($quantidadeprivado * 2) + 1 ))
-
                 $aviso1
                 $aviso2
-
                 Use IPv6
                 " 15 60
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
     echo "/ip firewall nat" > $arquivo
-    echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen - Desative essa regra para desativar o CGNAT\"" >> $arquivo
+    echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen para o bloco $ippublico/$mascarapublico - Desative essa regra para desativar o CGNAT\"" >> $arquivo
     ippubpo=`echo $ippublico | cut -d . -f 1`
     ippubso=`echo $ippublico | cut -d . -f 2`
     ippubto=`echo $ippublico | cut -d . -f 3`
