@@ -33,8 +33,8 @@ while : ; do
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
-    ipprivado=`echo $entrada | cut -f 1 -d /`
-    mascaraprivado=`echo $entrada | cut -f 2 -d /`
+    ipprivado=$( echo $entrada | cut -f 1 -d / )
+    mascaraprivado=$( echo $entrada | cut -f 2 -d / )
     if [[ $mascaraprivado -gt 25 ]]
     then
         dialog --stdout --msgbox 'Quem faz CGNAT com tão poucos IPs?' 0 0
@@ -58,8 +58,8 @@ while : ; do
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
-    ippublico=`echo $entrada | cut -f 1 -d /`
-    mascarapublico=`echo $entrada | cut -f 2 -d /`
+    ippublico=$( echo $entrada | cut -f 1 -d / )
+    mascarapublico=$( echo $entrada | cut -f 2 -d / )
     quantidadepublico=$((2**$((32-$mascarapublico))))
     quantidadeprivado=$((2**$((32-$mascaraprivado))))
     relacao=$(($quantidadeprivado/$quantidadepublico))
@@ -86,15 +86,15 @@ while : ; do
                 " 15 60
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
     echo "/ip firewall nat" > $arquivo
-    echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen para o bloco $ippublico/$mascarapublico - Desative essa regra para desativar o CGNAT\"" >> $arquivo
-    ippubpo=`echo $ippublico | cut -d . -f 1`
-    ippubso=`echo $ippublico | cut -d . -f 2`
-    ippubto=`echo $ippublico | cut -d . -f 3`
-    ippubqo=`echo $ippublico | cut -d . -f 4`
-    ipprvpo=`echo $ipprivado | cut -d . -f 1`
-    ipprvso=`echo $ipprivado | cut -d . -f 2`
-    ipprvto=`echo $ipprivado | cut -d . -f 3`
-    ipprvqo=`echo $ipprivado | cut -d . -f 4`
+    echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen. Do bloco privado: $ipprivado/$mascaraprivado para o bloco publico: $ippublico/$mascarapublico - Desative essa regra para desativar o CGNAT\"" >> $arquivo
+    set -f; IFS='.'
+    set -- $ippublico
+    ippubpo=$1; ippubso=$2; ippubto=$3; ippubqo=$4
+    set +f; unset IFS
+    set -f; IFS='.'
+    set -- $ipprivado
+    ipprvpo=$1; ipprvso=$2; ipprvto=$3; ippsrvqo=$4
+    set +f; unset IFS
     comecoporta=1501
     y=1
     while [ $y -le $quantidadepublico ]
@@ -109,19 +109,20 @@ while : ; do
             ipprvqo=0
             ipprvto=$(( $ipprvto + 1))
         fi
-        echo "add chain=CGNAT action=jump jump-target=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" src-address=\"$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump\" comment=\"CGNAT por cgnatgen - JUMP para $ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
+        echo "add chain=CGNAT action=jump jump-target=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" src-address=\"$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump\" comment=\"CGNAT por cgnatgen - regra de JUMP do bloco privado: $ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump para o IP publico: $ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
         ippubqo=$(( $ippubqo + 1 ))
         ipprvqo=$(( $ipprvqo + $relacao ))
         y=$(( $y + 1 ))
     done
+    set -f; IFS='.'
+    set -- $ippublico
+    ippubpo=$1; ippubso=$2; ippubto=$3; ippubqo=$4
+    set +f; unset IFS
+    set -f; IFS='.'
+    set -- $ipprivado
+    ipprvpo=$1; ipprvso=$2; ipprvto=$3; ipprvqo=$4
+    set +f; unset IFS
     ippubpo=`echo $ippublico | cut -d . -f 1`
-    ippubso=`echo $ippublico | cut -d . -f 2`
-    ippubto=`echo $ippublico | cut -d . -f 3`
-    ippubqo=`echo $ippublico | cut -d . -f 4`
-    ipprvpo=`echo $ipprivado | cut -d . -f 1`
-    ipprvso=`echo $ipprivado | cut -d . -f 2`
-    ipprvto=`echo $ipprivado | cut -d . -f 3`
-    ipprvqo=`echo $ipprivado | cut -d . -f 4`
     y=1
     portainicial=$comecoporta
     while [ $y -le $quantidadepublico ]
@@ -136,7 +137,7 @@ while : ; do
             ipprvqo=0
             ipprvto=$(( $ipprvto + 1))
         fi
-        echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=icmp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump to-address=$ippubpo.$ippubso.$ippubto.$ippubqo" >> $arquivo
+        echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=icmp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump to-address=$ippubpo.$ippubso.$ippubto.$ippubqo comment=\"CGNAT - Protocolo: ICMP do bloco privado: $ipprvpo.$ipprvso.$ipprvto.$ipprvqo/$mascarajump para o IP publico: $ippubpo.$ippubso.$ippubto.$ippubqo\"" >> $arquivo
         x=1
         while [ $x -le $relacao ]
         do
@@ -150,8 +151,9 @@ while : ; do
                 ipprvqo=0
                 ipprvto=$(( $ipprvto + 1))
             fi
-            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=tcp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 ))" >> $arquivo
-            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=udp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$(( $portainicial + $portas - 1 ))" >> $arquivo
+            portafinal=$(( $portainicial + $portas - 1 ))
+            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=tcp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$portafinal comment=\"CGNAT - Protocolo: TCP do IP privado: $ipprvpo.$ipprvso.$ipprvto.$ipprvqo para o IP publico: $ippubpo.$ippubso.$ippubto.$ippubqo, portas de $portainicial a $portafinal\"" >> $arquivo
+            echo "add chain=\"CGNAT-$ippubpo.$ippubso.$ippubto.$ippubqo\" action=src-nat protocol=udp src-address=$ipprvpo.$ipprvso.$ipprvto.$ipprvqo to-address=$ippubpo.$ippubso.$ippubto.$ippubqo to-ports=$portainicial-$portafinal comment=\"CGNAT - Protocolo: UDP do IP privado: $ipprvpo.$ipprvso.$ipprvto.$ipprvqo para o IP publico: $ippubpo.$ippubso.$ippubto.$ippubqo, portas de $portainicial a $portafinal\"">> $arquivo
             portainicial=$(( $portainicial + $portas ))
             ipprvqo=$(( $ipprvqo + 1 ))
             x=$(( $x + 1 ))
@@ -163,6 +165,6 @@ while : ; do
     exit
 done
 else
-    echo cgnatgen - Desenvolvido por $autor - Versão: $versao
-    echo dialog não instalado
+    echo "cgnatgen - Desenvolvido por $autor - Versão: $versao
+          dialog não instalado"
 fi
