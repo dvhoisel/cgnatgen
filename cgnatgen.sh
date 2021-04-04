@@ -33,8 +33,10 @@ while : ; do
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
-    ipprivado=$( echo $entrada | cut -f 1 -d / )
-    mascaraprivado=$( echo $entrada | cut -f 2 -d / )
+    set -f; IFS='/'
+    set -- $entrada
+    ipprivado=$1; mascaraprivado=$2
+    set +f; unset IFS
     if [[ $mascaraprivado -gt 25 ]]
     then
         dialog --stdout --msgbox 'Quem faz CGNAT com tão poucos IPs?' 0 0
@@ -58,8 +60,10 @@ while : ; do
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
-    ippublico=$( echo $entrada | cut -f 1 -d / )
-    mascarapublico=$( echo $entrada | cut -f 2 -d / )
+    set -f; IFS='/'
+    set -- $entrada
+    ippublico=$1; mascarapublico=$2
+    set +f; unset IFS
     quantidadepublico=$((2**$((32-$mascarapublico))))
     quantidadeprivado=$((2**$((32-$mascaraprivado))))
     relacao=$(($quantidadeprivado/$quantidadepublico))
@@ -122,7 +126,6 @@ while : ; do
     set -- $ipprivado
     ipprvpo=$1; ipprvso=$2; ipprvto=$3; ipprvqo=$4
     set +f; unset IFS
-    ippubpo=`echo $ippublico | cut -d . -f 1`
     y=1
     portainicial=$comecoporta
     while [ $y -le $quantidadepublico ]
