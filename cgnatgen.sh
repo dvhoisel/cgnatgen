@@ -33,10 +33,7 @@ while : ; do
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
-    set -f; IFS='/'
-    set -- $entrada
-    ipprivado=$1; mascaraprivado=$2
-    set +f; unset IFS
+    IFS='/' read -r ipprivado mascaraprivado <<<"$entrada"
     if [[ $mascaraprivado -gt 25 ]]
     then
         dialog --stdout --msgbox 'Quem faz CGNAT com tão poucos IPs?' 0 0
@@ -60,10 +57,7 @@ while : ; do
     else
         dialog --stdout --sleep 2 --backtitle 'cgnatgen' --title "cgnatgen - Desenvolvido por $autor - Versão: $versao" --infobox "ipcalc não está instalado. A validação não foi feita" 0 0
     fi
-    set -f; IFS='/'
-    set -- $entrada
-    ippublico=$1; mascarapublico=$2
-    set +f; unset IFS
+    IFS='/' read -r ippublico mascarapublico <<<"$entrada"
     quantidadepublico=$((2**$((32-$mascarapublico))))
     quantidadeprivado=$((2**$((32-$mascaraprivado))))
     relacao=$(($quantidadeprivado/$quantidadepublico))
@@ -91,14 +85,8 @@ while : ; do
     mascarajump=$((32-($mascarapublico-$mascaraprivado)))
     echo "/ip firewall nat" > $arquivo
     echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen. Do bloco privado: $ipprivado/$mascaraprivado para o bloco publico: $ippublico/$mascarapublico - Desative essa regra para desativar o CGNAT\"" >> $arquivo
-    set -f; IFS='.'
-    set -- $ippublico
-    ippubpo=$1; ippubso=$2; ippubto=$3; ippubqo=$4
-    set +f; unset IFS
-    set -f; IFS='.'
-    set -- $ipprivado
-    ipprvpo=$1; ipprvso=$2; ipprvto=$3; ippsrvqo=$4
-    set +f; unset IFS
+    IFS='.' read -r ippubpo ippubso ippubto ippubqo <<<"$ippublico"
+    IFS='.' read -r ipprvpo ipprvso ipprvto ippsrvqo <<<"$ipprivado"
     comecoporta=1501
     y=1
     while [ $y -le $quantidadepublico ]
@@ -118,14 +106,8 @@ while : ; do
         ipprvqo=$(( $ipprvqo + $relacao ))
         y=$(( $y + 1 ))
     done
-    set -f; IFS='.'
-    set -- $ippublico
-    ippubpo=$1; ippubso=$2; ippubto=$3; ippubqo=$4
-    set +f; unset IFS
-    set -f; IFS='.'
-    set -- $ipprivado
-    ipprvpo=$1; ipprvso=$2; ipprvto=$3; ipprvqo=$4
-    set +f; unset IFS
+    IFS='.' read -r ippubpo ippubso ippubto ippubqo <<<"$ippublico"
+    IFS='.' read -r ipprvpo ipprvso ipprvto ippsrvqo <<<"$ipprivado"
     y=1
     portainicial=$comecoporta
     while [ $y -le $quantidadepublico ]
