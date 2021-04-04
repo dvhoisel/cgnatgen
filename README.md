@@ -18,5 +18,4 @@ Usa o ipcalc para fazer algumas validações de IP.
 
 
 TODO: 
-- Substituir cut por separação de variável em matriz
 - Aceitar mais de um prefixo público para um prefixo privado
