@@ -19,3 +19,4 @@ Usa o ipcalc para fazer algumas validações de IP.
 
 TODO: 
 - Aceitar mais de um prefixo público para um prefixo privado
+  A versão 0.2-beta já aceita - faltam algumas validações
