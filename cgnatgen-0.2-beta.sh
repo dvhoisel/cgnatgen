@@ -57,7 +57,7 @@ while : ; do
                 Obs.: Quando informado mais de um bloco,
                 para efeito do cálculo da quantidade de portas,
                 será computada a quantidade total de IPs,
-                que tem que potência na base 2." 0 0 )
+                que deve ser potência na base 2." 0 0 )
     echo "/ip firewall nat" > $arquivo
     echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen. Do bloco privado: $ipprivado/$mascaraprivado para o(s) bloco(s) publico(s): $entrada - Desative essa regra para desativar o CGNAT\"" >> $arquivo
 	quantidadepublico=0
