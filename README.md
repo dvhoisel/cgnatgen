@@ -8,14 +8,17 @@ Depende do dialog
 
 Usa o ipcalc para fazer algumas validações de IP.
 
-### Screenshots
+### Screenshots v0.1
 
-![Screenshot da entrada do prefixo privado](/cgnatgen.png "Prefixo privado")
+![Screenshot da entrada do prefixo privado](/cgnatgen.png "Bloco privado")
 
-![Screenshot da entrada do prefixo público](/cgnatgen2.png "Prefixo público")
+![Screenshot da entrada do prefixo público](/cgnatgen2.png "Bloco público")
 
 ![Screenshot da saída com informações](/cgnatgen3.png "Informações de saída")
 
+### Screenshots v0.2-beta
+
+![Screenshot da entrada dos blocos públicos](/cgnatgen4.png "Blocos públicos")
 
 TODO: 
 - Aceitar mais de um prefixo público para um prefixo privado
