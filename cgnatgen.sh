@@ -86,7 +86,7 @@ while : ; do
     echo "/ip firewall nat" > $arquivo
     echo "add chain=srcnat action=jump jump-target=CGNAT src-address=$ipprivado/$mascaraprivado comment=\"CGNAT por cgnatgen. Do bloco privado: $ipprivado/$mascaraprivado para o bloco publico: $ippublico/$mascarapublico - Desative essa regra para desativar o CGNAT\"" >> $arquivo
     IFS='.' read -r ippubpo ippubso ippubto ippubqo <<<"$ippublico"
-    IFS='.' read -r ipprvpo ipprvso ipprvto ippsrvqo <<<"$ipprivado"
+    IFS='.' read -r ipprvpo ipprvso ipprvto ipprvqo <<<"$ipprivado"
     comecoporta=1501
     y=1
     while [ $y -le $quantidadepublico ]
@@ -107,7 +107,7 @@ while : ; do
         y=$(( $y + 1 ))
     done
     IFS='.' read -r ippubpo ippubso ippubto ippubqo <<<"$ippublico"
-    IFS='.' read -r ipprvpo ipprvso ipprvto ippsrvqo <<<"$ipprivado"
+    IFS='.' read -r ipprvpo ipprvso ipprvto ipprvqo <<<"$ipprivado"
     y=1
     portainicial=$comecoporta
     while [ $y -le $quantidadepublico ]
