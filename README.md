@@ -21,6 +21,7 @@ Usa o ipcalc para fazer algumas validações de IP.
 ![Screenshot da entrada dos blocos públicos](/cgnatgen4.png "Blocos públicos")
 
 TODO: 
+- Gerar regras com portas flexíveis, vinculando cada faixa a um bloco privado ou IP público. 
 - Aceitar mais de um prefixo público para um prefixo privado
 
   A versão 0.2-beta já aceita - faltam algumas validações
