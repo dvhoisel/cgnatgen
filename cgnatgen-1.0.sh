@@ -118,7 +118,7 @@ get_input() {
     while true; do
         local tempfile=$(mktemp)
         
-        dialog --title "Configuração CGNAT" \
+        dialog --title "cgnatgen 1.0 - por Daniel Hoisel" \
             --form "Insira os blocos de IP:\n(Campos públicos adicionais são opcionais)" \
             28 64 21 \
             "Bloco Privado (ex: 100.64.0.0/22): *" 1 1 "" 1 38 20 0 \
