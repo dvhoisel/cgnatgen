@@ -238,7 +238,7 @@ generate_rules() {
 
     {
         echo "/ip firewall nat"
-        echo "add chain=srcnat action=jump jump-target=CGNAT src-address=${privado_prefix} comment=\"CGNAT: ${privado_prefix} → Blocos Públicos: ${publico_prefixes[*]} | Total IPs: ${total_public_ips} | Qtd Blocos: ${#publico_prefixes[@]} | Portas/IP: ${portas_por_ip}\""
+        echo "add chain=srcnat action=jump jump-target=CGNAT src-address=${privado_prefix} comment=\"CGNAT: ${privado_prefix} -> Blocos Públicos: ${publico_prefixes[*]} | Total IPs: ${total_public_ips} | Qtd Blocos: ${#publico_prefixes[@]} | Portas/IP: ${portas_por_ip}\""
     } >> mk-cgnat.rsc
 
     for block in "${publico_prefixes[@]}"; do
@@ -259,8 +259,8 @@ generate_rules() {
             fi
             allocated_subnets["$subnet_cidr"]=1
 
-            jump_rules+=("add chain=CGNAT action=jump jump-target=\"CGNAT-$current_public_ip\" src-address=\"$subnet_cidr\" comment=\"Sub-rede: $subnet_cidr → $current_public_ip\"")
-            nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=icmp src-address=\"$subnet_cidr\" to-address=$current_public_ip comment=\"ICMP: $subnet_cidr → $current_public_ip\"")
+            jump_rules+=("add chain=CGNAT action=jump jump-target=\"CGNAT-$current_public_ip\" src-address=\"$subnet_cidr\" comment=\"Sub-rede: $subnet_cidr -> $current_public_ip\"")
+            nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=icmp src-address=\"$subnet_cidr\" to-address=$current_public_ip comment=\"ICMP: $subnet_cidr -> $current_public_ip\"")
 
             for (( j=0; j < ratio; j++ )); do
                 local private_ip=$(int_to_ip $(( private_subnet_start + j )) )
@@ -272,8 +272,8 @@ generate_rules() {
                     exit 1
                 fi
 
-                nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=tcp src-address=$private_ip to-address=$current_public_ip to-ports=$porta_inicio-$porta_fim comment=\"TCP: $private_ip → $current_public_ip:$porta_inicio-$porta_fim\"")
-                nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=udp src-address=$private_ip to-address=$current_public_ip to-ports=$porta_inicio-$porta_fim comment=\"UDP: $private_ip → $current_public_ip:$porta_inicio-$porta_fim\"")
+                nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=tcp src-address=$private_ip to-address=$current_public_ip to-ports=$porta_inicio-$porta_fim comment=\"TCP: $private_ip -> $current_public_ip:$porta_inicio-$porta_fim\"")
+                nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=udp src-address=$private_ip to-address=$current_public_ip to-ports=$porta_inicio-$porta_fim comment=\"UDP: $private_ip -> $current_public_ip:$porta_inicio-$porta_fim\"")
             done
 
             current_private_offset=$(( current_private_offset + ratio ))
