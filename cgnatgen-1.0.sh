@@ -1,14 +1,36 @@
 #!/bin/bash
-# cgnatgen - versao 1.0 por Daniel Hoisel
-# Licenciado sob a GPL 3.0
+# cgnatgen 1.0 - por Daniel Hoisel sob GPL 3.0
 
-# Verifica se o dialog está instalado
-if ! command -v dialog &> /dev/null; then
-    echo "Erro: dialog não está instalado. Instale com 'sudo apt-get install dialog'"
-    exit 1
-fi
+# Verifica dependências
+check_dependencies() {
+    local missing=()
+    
+    declare -A required=(
+        [dialog]="Interface de usuário textual"
+        [bc]="Cálculos matemáticos"
+        [awk]="Processamento de texto"
+        [stdbuf]="Controle de buffer (coreutils)"
+    )
+    
+    for cmd in dialog bc awk stdbuf; do
+        if ! command -v $cmd &> /dev/null; then
+            missing+=("$cmd (${required[$cmd]})")
+        fi
+    done
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        echo "Erro: dependências não instaladas:"
+        for pkg in "${missing[@]}"; do
+            echo "  - $pkg"
+        done
+        echo -e "\nInstale com:"
+        echo "  sudo apt-get install dialog bc gawk coreutils"
+        exit 1
+    fi
+}
 
-# Funções de conversão IP/Inteiro
+check_dependencies
+
 ip_to_int() {
     local ip=$1
     IFS='.' read -r a b c d <<< "$ip"
@@ -26,7 +48,6 @@ network_address() {
     echo $(( ip_int & (0xFFFFFFFF << (32 - mask)) ))
 }
 
-# Validação de CIDR
 validate_cidr() {
     local cidr_regex='^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
     if [[ ! $1 =~ $cidr_regex ]]; then
@@ -52,7 +73,6 @@ validate_cidr() {
     return 0
 }
 
-# Verificação de sobreposição de blocos
 check_overlap() {
     local cidr1=$1
     local cidr2=$2
@@ -76,7 +96,6 @@ check_overlap() {
     return 1
 }
 
-# Verificação de IPs privados
 is_private_ip() {
     local ip_int=$(ip_to_int $1)
     
@@ -88,13 +107,11 @@ is_private_ip() {
     return 1
 }
 
-# Verificação de IPs públicos
 is_public_ip() {
     ! is_private_ip $1 && return 0
     return 1
 }
 
-# Interface de entrada
 get_input() {
     declare -g privado_ip privado_mask publico_prefixes portas_por_ip ratio total_public_ips
 
@@ -135,14 +152,12 @@ get_input() {
         privado_prefix="${inputs[0]}"
         publico_prefixes=("${inputs[@]:1:20}")
 
-        # Validação do bloco privado
         if ! validate_cidr "$privado_prefix" || ! is_private_ip "${privado_prefix%%/*}"; then
             dialog --msgbox "Bloco Privado inválido!\nDeve ser RFC 1918 ou CGNAT (ex: 100.64.0.0/10)" 8 50
             continue
         fi
         IFS='/' read -r privado_ip privado_mask <<< "$privado_prefix"
 
-        # Validação dos blocos públicos
         local temp_public=()
         for ((i=0; i<20; i++)); do
             block="${publico_prefixes[$i]}"
@@ -167,7 +182,6 @@ get_input() {
         
         publico_prefixes=("${temp_public[@]}")
 
-        # Verificação de sobreposição
         overlap_found=false
         for ((i=0; i<${#publico_prefixes[@]}; i++)); do
             for ((j=i+1; j<${#publico_prefixes[@]}; j++)); do
@@ -183,7 +197,6 @@ get_input() {
             continue
         fi
 
-        # Cálculo do total de IPs públicos
         total_public_ips=0
         for block in "${publico_prefixes[@]}"; do
             IFS='/' read -r ip mask <<< "$block"
@@ -212,15 +225,21 @@ get_input() {
     done
 }
 
-# Gerador de regras
 generate_rules() {
     local privado_net=$(network_address $(ip_to_int "$privado_ip") "$privado_mask")
     declare -a jump_rules nat_rules
     local current_private_offset=0
     declare -A allocated_subnets
 
-    echo "/ip firewall nat" > mk-cgnat.rsc
-    echo "add chain=srcnat action=jump jump-target=CGNAT src-address=${privado_prefix} comment=\"CGNAT: ${privado_prefix} → Blocos Públicos: ${publico_prefixes[*]} | Total IPs: ${total_public_ips} | Qtd Blocos: ${#publico_prefixes[@]} | Portas/IP: ${portas_por_ip}\"" >> mk-cgnat.rsc
+    > mk-cgnat.rsc || {
+        dialog --msgbox "Erro: Não foi possível criar o arquivo mk-cgnat.rsc" 8 60
+        exit 1
+    }
+
+    {
+        echo "/ip firewall nat"
+        echo "add chain=srcnat action=jump jump-target=CGNAT src-address=${privado_prefix} comment=\"CGNAT: ${privado_prefix} → Blocos Públicos: ${publico_prefixes[*]} | Total IPs: ${total_public_ips} | Qtd Blocos: ${#publico_prefixes[@]} | Portas/IP: ${portas_por_ip}\""
+    } >> mk-cgnat.rsc
 
     for block in "${publico_prefixes[@]}"; do
         IFS='/' read -r publico_ip publico_mask <<< "$block"
@@ -230,7 +249,8 @@ generate_rules() {
         for (( i=0; i < num_ips; i++ )); do
             local current_public_ip=$(int_to_ip $(( publico_net + i )) )
             local private_subnet_start=$(( privado_net + current_private_offset ))
-            local subnet_mask=$(( 32 - $(echo "l($ratio)/l(2)" | bc -l | cut -d. -f1) ))
+            
+            local subnet_mask=$(LC_NUMERIC=C printf "scale=10; l($ratio)/l(2)\n" | bc -l | awk '{printf "%d\n", 32 - int($0 + 0.5)}')
             local subnet_cidr="$(int_to_ip $private_subnet_start)/$subnet_mask"
 
             if [[ -n "${allocated_subnets[$subnet_cidr]}" ]]; then
@@ -260,15 +280,14 @@ generate_rules() {
         done
     done
 
-    printf "%s\n" "${jump_rules[@]}" >> mk-cgnat.rsc
-    printf "%s\n" "${nat_rules[@]}" >> mk-cgnat.rsc
+    # Escreve regras com quebras de linha garantidas
+    printf "%s\n" "${jump_rules[@]}" | stdbuf -oL tee -a mk-cgnat.rsc >/dev/null
+    printf "%s\n" "${nat_rules[@]}" | stdbuf -oL tee -a mk-cgnat.rsc >/dev/null
 }
 
-# Execução principal
 get_input
 generate_rules
 
-# Exibe resumo
 publico_list=$(IFS=,; echo "${publico_prefixes[*]}")
 dialog --title "Concluído" \
        --msgbox "Arquivo mk-cgnat.rsc gerado com sucesso!\n\n- Bloco Privado: ${privado_prefix}\n- Blocos Públicos: ${publico_list}\n- Total IPs Públicos: ${total_public_ips}\n- Quantidade de Blocos: ${#publico_prefixes[@]}\n- Portas por IP: ${portas_por_ip}" \
