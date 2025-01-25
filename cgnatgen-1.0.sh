@@ -52,14 +52,38 @@ validate_cidr() {
     return 0
 }
 
+# Verificação de sobreposição de blocos
+check_overlap() {
+    local cidr1=$1
+    local cidr2=$2
+    
+    IFS='/' read -r ip1 mask1 <<< "$cidr1"
+    IFS='/' read -r ip2 mask2 <<< "$cidr2"
+    
+    local net1=$(network_address $(ip_to_int "$ip1") "$mask1")
+    local net2=$(network_address $(ip_to_int "$ip2") "$mask2")
+    
+    local size1=$(( 2 ** (32 - mask1) ))
+    local size2=$(( 2 ** (32 - mask2) ))
+    
+    local end1=$(( net1 + size1 - 1 ))
+    local end2=$(( net2 + size2 - 1 ))
+    
+    if (( (net1 >= net2 && net1 <= end2) || (net2 >= net1 && net2 <= end1) )); then
+        return 0
+    fi
+    
+    return 1
+}
+
 # Verificação de IPs privados
 is_private_ip() {
     local ip_int=$(ip_to_int $1)
     
-    (( ip_int >= 0x0A000000 && ip_int <= 0x0AFFFFFF )) && return 0   # 10.0.0.0/8
-    (( ip_int >= 0xAC100000 && ip_int <= 0xAC1FFFFF )) && return 0   # 172.16.0.0/12
-    (( ip_int >= 0xC0A80000 && ip_int <= 0xC0A8FFFF )) && return 0   # 192.168.0.0/16
-    (( ip_int >= 0x64400000 && ip_int <= 0x647FFFFF )) && return 0   # 100.64.0.0/10
+    (( ip_int >= 0x0A000000 && ip_int <= 0x0AFFFFFF )) && return 0
+    (( ip_int >= 0xAC100000 && ip_int <= 0xAC1FFFFF )) && return 0
+    (( ip_int >= 0xC0A80000 && ip_int <= 0xC0A8FFFF )) && return 0
+    (( ip_int >= 0x64400000 && ip_int <= 0x647FFFFF )) && return 0
     
     return 1
 }
@@ -70,79 +94,96 @@ is_public_ip() {
     return 1
 }
 
-# Interface de entrada de dados
+# Interface de entrada
 get_input() {
     declare -g privado_ip privado_mask publico_prefixes portas_por_ip ratio total_public_ips
 
     while true; do
-        local tempfile1=$(mktemp)
-        dialog --title "cgnatgen - versao 1.0 por Daniel Hoisel" \
-            --form "Insira os blocos de IP:" \
-            12 66 3 \
-            "Bloco Privado (ex: 100.64.0.0/23):" 1 1 "" 1 36 36 0 \
-            "Bloco Público (ex: 200.20.0.0/28):" 2 1 "" 2 36 36 0 \
-            "Blocos públicos adicionais (1-19):" 3 1 "" 3 36 36 0 \
-            2> "$tempfile1"
+        local tempfile=$(mktemp)
+        
+        dialog --title "Configuração CGNAT" \
+            --form "Insira os blocos de IP:\n(Campos públicos adicionais são opcionais)" \
+            28 64 21 \
+            "Bloco Privado (ex: 100.64.0.0/22): *" 1 1 "" 1 38 20 0 \
+            "Bloco Público (ex: 200.20.0.0/27): *" 2 1 "" 2 38 20 0 \
+            "Bloco Público 2:"                    3 1 "" 3 38 20 0 \
+            "Bloco Público 3:"                    4 1 "" 4 38 20 0 \
+            "Bloco Público 4:"                    5 1 "" 5 38 20 0 \
+            "Bloco Público 5:"                    6 1 "" 6 38 20 0 \
+            "Bloco Público 6:"                    7 1 "" 7 38 20 0 \
+            "Bloco Público 7:"                    8 1 "" 8 38 20 0 \
+            "Bloco Público 8:"                    9 1 "" 9 38 20 0 \
+            "Bloco Público 9:"                    10 1 "" 10 38 20 0 \
+            "Bloco Público 10:"                   11 1 "" 11 38 20 0 \
+            "Bloco Público 11:"                   12 1 "" 12 38 20 0 \
+            "Bloco Público 12:"                   13 1 "" 13 38 20 0 \
+            "Bloco Público 13:"                   14 1 "" 14 38 20 0 \
+            "Bloco Público 14:"                   15 1 "" 15 38 20 0 \
+            "Bloco Público 15:"                   16 1 "" 16 38 20 0 \
+            "Bloco Público 16:"                   17 1 "" 17 38 20 0 \
+            "Bloco Público 17:"                   18 1 "" 18 38 20 0 \
+            "Bloco Público 18:"                   19 1 "" 19 38 20 0 \
+            "Bloco Público 19:"                   20 1 "" 20 38 20 0 \
+            "Bloco Público 20:"                   21 1 "" 21 38 20 0 \
+            2> "$tempfile"
 
-        [ $? -ne 0 ] && { rm -f "$tempfile1"; clear; exit 1; }
+        [ $? -ne 0 ] && { rm -f "$tempfile"; clear; exit 1; }
 
-        IFS=$'\n' read -d '' -r privado_prefix publico_prefix1 num_additional < "$tempfile1"
-        rm -f "$tempfile1"
+        IFS=$'\n' read -d '' -r -a inputs < "$tempfile"
+        rm -f "$tempfile"
 
-        [[ -z "$num_additional" ]] && num_additional=0
+        privado_prefix="${inputs[0]}"
+        publico_prefixes=("${inputs[@]:1:20}")
 
-        if ! [[ "$num_additional" =~ ^[0-9]+$ ]] || (( num_additional < 0 || num_additional > 19 )); then
-            dialog --msgbox "Número de blocos adicionais inválido!\nDeve ser entre 0-19." 8 50
+        # Validação do bloco privado
+        if ! validate_cidr "$privado_prefix" || ! is_private_ip "${privado_prefix%%/*}"; then
+            dialog --msgbox "Bloco Privado inválido!\nDeve ser RFC 1918 ou CGNAT (ex: 100.64.0.0/10)" 8 50
             continue
         fi
-
-        additional_public=()
-        if (( num_additional > 0 )); then
-            local tempfile2=$(mktemp)
-            local form_args=()
-            for ((i=1; i<=num_additional; i++)); do
-                form_args+=("Bloco Público Adicional $i:")
-                form_args+=("$i" 1 "" "$i" 30 30 0)
-            done
-
-            dialog --title "Blocos Públicos Adicionais" \
-                --form "Insira os blocos adicionais:" \
-                $((num_additional + 7)) 60 $num_additional \
-                "${form_args[@]}" \
-                2> "$tempfile2"
-
-            IFS=$'\n' read -d '' -r -a additional_public < "$tempfile2"
-            rm -f "$tempfile2"
-        fi
-
-        validate_cidr "$privado_prefix" || continue
         IFS='/' read -r privado_ip privado_mask <<< "$privado_prefix"
-        if ! is_private_ip "$privado_ip"; then
-            dialog --msgbox "IP Privado inválido!\nDeve ser RFC 1918 ou CGNAT (100.64.0.0/10)" 8 50
-            continue
-        fi
 
-        validate_cidr "$publico_prefix1" || continue
-        IFS='/' read -r publico_ip publico_mask <<< "$publico_prefix1"
-        if ! is_public_ip "$publico_ip"; then
-            dialog --msgbox "IP Público 1 inválido!\nNão pode ser privado/reservado" 8 50
-            continue
-        fi
-
-        publico_prefixes=("$publico_prefix1")
-        local valid=true
-        for block in "${additional_public[@]}"; do
-            validate_cidr "$block" || { valid=false; break; }
-            IFS='/' read -r ip mask <<< "$block"
-            if ! is_public_ip "$ip"; then
-                dialog --msgbox "IP Público adicional inválido: $block\nNão pode ser privado/reservado" 8 50
-                valid=false
-                break
+        # Validação dos blocos públicos
+        local temp_public=()
+        for ((i=0; i<20; i++)); do
+            block="${publico_prefixes[$i]}"
+            block_number=$((i + 1))
+            
+            if (( block_number == 1 )) && [[ -z "$block" ]]; then
+                dialog --msgbox "Bloco Público 1 é obrigatório!" 8 50
+                continue 2
             fi
-            publico_prefixes+=("$block")
+            
+            if (( block_number > 1 )) && [[ -z "$block" ]]; then 
+                continue
+            fi
+            
+            if ! validate_cidr "$block" || ! is_public_ip "${block%%/*}"; then
+                dialog --msgbox "Bloco Público $block_number inválido: $block\nFormato: IP/CIDR (8-30) e deve ser público." 8 60
+                continue 2
+            fi
+            
+            temp_public+=("$block")
         done
-        $valid || continue
+        
+        publico_prefixes=("${temp_public[@]}")
 
+        # Verificação de sobreposição
+        overlap_found=false
+        for ((i=0; i<${#publico_prefixes[@]}; i++)); do
+            for ((j=i+1; j<${#publico_prefixes[@]}; j++)); do
+                if check_overlap "${publico_prefixes[i]}" "${publico_prefixes[j]}"; then
+                    dialog --msgbox "Blocos públicos sobrepostos detectados:\n\n${publico_prefixes[i]}\n${publico_prefixes[j]}" 10 60
+                    overlap_found=true
+                    break 2
+                fi
+            done
+        done
+
+        if $overlap_found; then
+            continue
+        fi
+
+        # Cálculo do total de IPs públicos
         total_public_ips=0
         for block in "${publico_prefixes[@]}"; do
             IFS='/' read -r ip mask <<< "$block"
@@ -155,26 +196,28 @@ get_input() {
         fi
 
         local private_total=$(( 2**(32 - privado_mask) ))
-        ratio=$(( private_total / total_public_ips ))
         if (( private_total % total_public_ips != 0 )); then
             dialog --msgbox "Blocos incompatíveis!\nIPs privados: $private_total\nIPs públicos: $total_public_ips" 8 50
             continue
         fi
+        ratio=$(( private_total / total_public_ips ))
 
-        portas_por_ip=$(( 64000 / ratio ))
         if (( 64000 % ratio != 0 )); then
             dialog --msgbox "Relação inválida!\n64000 portas não são divisíveis por $ratio" 8 50
             continue
         fi
+        portas_por_ip=$(( 64000 / ratio ))
 
         break
     done
 }
 
-# Gerador de regras NAT
+# Gerador de regras
 generate_rules() {
     local privado_net=$(network_address $(ip_to_int "$privado_ip") "$privado_mask")
     declare -a jump_rules nat_rules
+    local current_private_offset=0
+    declare -A allocated_subnets
 
     echo "/ip firewall nat" > mk-cgnat.rsc
     echo "add chain=srcnat action=jump jump-target=CGNAT src-address=${privado_prefix} comment=\"CGNAT: ${privado_prefix} → Blocos Públicos: ${publico_prefixes[*]} | Total IPs: ${total_public_ips} | Qtd Blocos: ${#publico_prefixes[@]} | Portas/IP: ${portas_por_ip}\"" >> mk-cgnat.rsc
@@ -186,19 +229,24 @@ generate_rules() {
 
         for (( i=0; i < num_ips; i++ )); do
             local current_public_ip=$(int_to_ip $(( publico_net + i )) )
-            local private_subnet_start=$(( privado_net + (i * ratio) ))
+            local private_subnet_start=$(( privado_net + current_private_offset ))
             local subnet_mask=$(( 32 - $(echo "l($ratio)/l(2)" | bc -l | cut -d. -f1) ))
             local subnet_cidr="$(int_to_ip $private_subnet_start)/$subnet_mask"
+
+            if [[ -n "${allocated_subnets[$subnet_cidr]}" ]]; then
+                dialog --msgbox "ERRO: Sobreposição detectada na sub-rede $subnet_cidr" 8 60
+                exit 1
+            fi
+            allocated_subnets["$subnet_cidr"]=1
 
             jump_rules+=("add chain=CGNAT action=jump jump-target=\"CGNAT-$current_public_ip\" src-address=\"$subnet_cidr\" comment=\"Sub-rede: $subnet_cidr → $current_public_ip\"")
             nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=icmp src-address=\"$subnet_cidr\" to-address=$current_public_ip comment=\"ICMP: $subnet_cidr → $current_public_ip\"")
 
             for (( j=0; j < ratio; j++ )); do
                 local private_ip=$(int_to_ip $(( private_subnet_start + j )) )
-                local porta_inicio=$(( 1500 + (j * portas_por_ip) ))
+                local porta_inicio=$(( 1500 + j * portas_por_ip ))
                 local porta_fim=$(( porta_inicio + portas_por_ip - 1 ))
 
-                # Verifica se as portas ultrapassam 65535
                 if (( porta_fim > 65535 )); then
                     dialog --msgbox "ERRO: Portas excedem o limite máximo (65535) para o IP $current_public_ip" 8 60
                     exit 1
@@ -207,6 +255,8 @@ generate_rules() {
                 nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=tcp src-address=$private_ip to-address=$current_public_ip to-ports=$porta_inicio-$porta_fim comment=\"TCP: $private_ip → $current_public_ip:$porta_inicio-$porta_fim\"")
                 nat_rules+=("add chain=\"CGNAT-$current_public_ip\" action=src-nat protocol=udp src-address=$private_ip to-address=$current_public_ip to-ports=$porta_inicio-$porta_fim comment=\"UDP: $private_ip → $current_public_ip:$porta_inicio-$porta_fim\"")
             done
+
+            current_private_offset=$(( current_private_offset + ratio ))
         done
     done
 
