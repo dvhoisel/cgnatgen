@@ -24,7 +24,7 @@ check_dependencies() {
             echo "  - $pkg"
         done
         echo -e "\nInstale com:"
-        echo "  sudo apt-get install dialog bc gawk coreutils"
+        echo "  sudo apt install dialog bc gawk coreutils"
         exit 1
     fi
 }
