@@ -24,7 +24,7 @@ while : ; do
                 Defina o nome do arquivo, executando o programa
                 com o nome como parâmetro. Ex.:
                 ./cgnatgen.sh arquivo.rsc
-                Se não for defindo, será gerado como mk-cgnat.rsc
+                Se não for definido, será gerado como mk-cgnat.rsc
                 Atualmente o nome é: $arquivo
                 Informe o bloco privado, com a máscara.
                 Ex.: 100.100.0.0/20" 0 0 )
