@@ -4,9 +4,11 @@ Gerador de regras de CGNAT tipo porta fixa vertical para o Mikrotik
 Depois de procurar vários scripts na web, e não encontrar nenhum que fizesse exatamente o que eu queria,
 fiz esse em bash, que me atende. Espero que possa servir para outros.
 
-Depende do dialog
+Depende das ferramentas `dialog`, `bc`, `awk` (ou `gawk`) e `stdbuf` (coreutils).
 
-Usa o ipcalc para fazer algumas validações de IP.
+As versões até a 0.2-beta utilizavam `ipcalc` para validar IPs. A versão 1.0 realiza essas validações internamente e não depende mais dele.
+
+Para executar, rode `./cgnatgen-1.0.sh`.
 
 ### Screenshots v0.1
 
