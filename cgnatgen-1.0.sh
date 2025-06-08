@@ -193,7 +193,7 @@ get_input() {
             done
         done
 
-        if $overlap_found; then
+        if [[ "$overlap_found" == true ]]; then
             continue
         fi
 
